@@ -1,1 +1,70 @@
+libwebp 下载地址 http://www.linuxfromscratch.org/blfs/view/svn/general/libwebp.html
 
+一、扩展插件和工具准备：libwebp + ImageMagick + imagick + jpegsrc
+
+    1、libwebp：内部的 cwebp库 支持程序的编码和解码的WebP格式图像。http://www.linuxfromscratch.org/blfs/view/svn/general/libwebp.html
+    2、ImageMagick：免费的创建、编辑、合成图片的软件。它可以读取、转换、写入多种格式的图片。图片切割、颜色替换、各种效果的应用，图片的旋转、组合，文本，直线，多边形，椭圆，曲线，附加到图片伸展旋转。http://www.imagemagick.org/download/
+    3、imagick：供PHP调用ImageMagick功能的PHP扩展。使用这个扩展可以使PHP具备和ImageMagick相同的功能。http://pecl.php.net/package/imagick
+    4、jpegsrc：jpegsrc是用软件实现JPEG图像编码、解码、转码。https://fossies.org/linux/misc/jpegsrc.v9c.tar.gz/
+
+    注：百度云盘下载地址 https://pan.baidu.com/s/1htQKbVQ，密码：v8hp
+
+二、配置安装
+
+    1、安装webp库
+        1）解压安装包：tar -zxvf  libwebp-0.6.1.tar.gz
+        2）进入安装包：cd libwebp-0.6.1
+        3）编译/安装 ：./configure && make && make install
+        4）配置链接  ：ln -s /usr/lib64/libwebp.so.7.0.1 /usr/lib64/libwebp.so.7
+                  ln -s /usr/lib64/libwebp.so.7.0.1 /usr/lib64/libwebp.so
+
+    2、安装ImageMagick（https://www.imagemagick.org/download/ImageMagick.tar.gz）
+        1）解压安装包：unzip ImageMagick-6.9.9-36.zip
+        2）进入安装包：cd ImageMagick-6.9.9-36
+        3）编译/安装 ：./configure --prefix=/usr/local/imagemagick --with-webp
+                  make && make install
+        4）配置链接  ：ln -s /usr/local/imagemagick/include/ImageMagick-6 /usr/local/imagemagick/include/ImageMagick
+        5）环境变量：export MAGICK_HOME=/usr/local/imagemagick
+        
+        安装失败常见问题：
+        1）问题：magick/.libs/libMagickCore-6.Q16.so: undefined reference to `jpeg_default_qtables'。
+           方案：重新下载【jpegsrc.v9c.tar.gz】，编译最新的【libjpeg】
+                （1）tar -xzvf jpegsrc.v9.tar.gz   
+                （2）cd jpeg-9  
+                （3）./configure   
+                （4）make libdir=/usr/lib64    
+                （5）make libdir=/usr/lib64 install
+        2）问题：error while loading shared libraries: libMagickCore-6.Q16.so.1: cannot open shared object file: No such file or directory
+           方案：执行如下命令
+                 ldconfig /usr/local/lib
+                 then run:convert -version
+
+    3、安装imagick
+        1）解压安装包：tar -zxvf imagick-3.4.3.tgz
+        2）进入安装包：cd imagick-3.4.3
+        3）扩展PHP模块：/usr/local/php/bin/phpize
+                  export PKG_CONFIG_PATH=/usr/local/imagemagick/lib/pkgconfig
+        4）编译/安装：./configure --with-php-config=/usr/local/php/bin/php-config --with-imagick=/usr/local/imagemagick
+                 make && make install
+        5）配置PHP扩展：vim /usr/local/php5/etc/php.ini # 最后一行添加【extension="imagick.so"】
+
+    4、重启服务
+        1）重启 php-fpm：service php-fpm restart
+        2）重启 nginx  ：service nginx restart
+
+三、测试运行环境
+    
+    1、PHPINFO包含 imagick 扩展：php -m
+        
+    2、Linux转换命令：cwebp -q {int_q} {convert_img_path} -o {webp_img_path}
+        1）int_q：图片质量 0-100
+        2）convert_img_path：原图片绝对路径
+        3）webp_img_path：转换后生成webp格式图片的绝对路径
+        
+        实例：cwebp -q 80 /data/img/convert.jpeg -o /data/img/convert.webp  # 执行完成后，浏览 /data/img/convert.webp
+
+四、注意事项
+    
+    1、环境限制：目前仅针对 Linux 环境进行转换
+    2、PHP环境 ：配置允许执行【exec】系统函数
+    3、允许转换格式：JPEG、JPG、PNG
